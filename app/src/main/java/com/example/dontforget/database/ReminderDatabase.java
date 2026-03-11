@@ -8,7 +8,7 @@ import androidx.room.RoomDatabase;
 
 import com.example.dontforget.model.Reminder;
 
-@Database(entities = {Reminder.class}, version = 1)
+@Database(entities = {Reminder.class}, version = 2)
 public abstract class ReminderDatabase extends RoomDatabase {
 
     private static ReminderDatabase instance;
@@ -19,6 +19,7 @@ public abstract class ReminderDatabase extends RoomDatabase {
         if (instance == null) {
             instance = Room.databaseBuilder(context.getApplicationContext(),
                             ReminderDatabase.class, "reminder_db")
+                    .fallbackToDestructiveMigration()
                     .allowMainThreadQueries()
                     .build();
         }

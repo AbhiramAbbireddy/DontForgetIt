@@ -9,6 +9,7 @@ import android.content.Intent;
 import androidx.core.app.NotificationCompat;
 
 import com.example.dontforget.R;
+import com.example.dontforget.database.ReminderDatabase;
 
 public class ReminderReceiver extends BroadcastReceiver {
 
@@ -19,6 +20,8 @@ public class ReminderReceiver extends BroadcastReceiver {
                 (NotificationManager) context.getSystemService(Context.NOTIFICATION_SERVICE);
 
         String channelId = "reminder_channel";
+
+        int id = intent.getIntExtra("id", -1);
 
         if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O) {
 
@@ -35,12 +38,18 @@ public class ReminderReceiver extends BroadcastReceiver {
         }
 
         NotificationCompat.Builder builder =
-                new NotificationCompat.Builder(context,channelId)
+                new NotificationCompat.Builder(context, channelId)
                         .setSmallIcon(R.drawable.ic_launcher_foreground)
                         .setContentTitle("Reminder")
                         .setContentText(title)
                         .setPriority(NotificationCompat.PRIORITY_HIGH);
 
-        manager.notify(1,builder.build());
+        manager.notify(id > 0 ? id : 1, builder.build());
+
+        // Mark reminder as completed in the database
+        if (id > 0) {
+            ReminderDatabase db = ReminderDatabase.getInstance(context);
+            db.reminderDao().markCompleted(id);
+        }
     }
 }

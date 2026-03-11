@@ -12,8 +12,17 @@ import java.util.List;
 public interface ReminderDao {
 
     @Insert
-    void insert(Reminder reminder);
+    long insert(Reminder reminder);
 
     @Query("SELECT * FROM reminders ORDER BY id DESC")
     List<Reminder> getAllReminders();
+
+    @Query("SELECT * FROM reminders WHERE date = :date ORDER BY time")
+    List<Reminder> getRemindersForDate(String date);
+
+    @Query("UPDATE reminders SET completed = 1 WHERE id = :id")
+    void markCompleted(int id);
+
+    @Query("DELETE FROM reminders WHERE id = :id")
+    void deleteById(int id);
 }

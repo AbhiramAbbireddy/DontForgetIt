@@ -66,18 +66,35 @@
             </LinearLayout>
         </LinearLayout>
 
-        <TextView
-            android:id="@+id/reminderBadge"
+        <LinearLayout
             android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:background="@drawable/bg_badge"
-            android:paddingLeft="8dp"
-            android:paddingTop="4dp"
-            android:paddingRight="8dp"
-            android:paddingBottom="4dp"
-            android:text="10 min before"
-            android:textColor="#5B5FC7"
-            android:textSize="11sp" />
+            android:layout_height="match_parent"
+            android:gravity="center_vertical"
+            android:orientation="vertical">
+
+            <TextView
+                android:id="@+id/reminderBadge"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:background="@drawable/bg_badge"
+                android:paddingLeft="8dp"
+                android:paddingTop="4dp"
+                android:paddingRight="8dp"
+                android:paddingBottom="4dp"
+                android:text="10 min before"
+                android:textColor="#5B5FC7"
+                android:textSize="11sp" />
+
+            <ImageButton
+                android:id="@+id/deleteButton"
+                android:layout_width="32dp"
+                android:layout_height="32dp"
+                android:layout_marginTop="8dp"
+                android:background="@android:color/transparent"
+                android:contentDescription="Delete reminder"
+                android:src="@android:drawable/ic_menu_delete" />
+
+        </LinearLayout>
 
     </LinearLayout>
 

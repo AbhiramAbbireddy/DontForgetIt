@@ -33,6 +33,8 @@ public class MainActivity extends AppCompatActivity {
     RecyclerView reminderList;
     FloatingActionButton addButton;
     TextView emptyView;
+    TextView navHome;
+    TextView navCalendar;
 
     List<Reminder> reminderData;
     ReminderAdapter adapter;
@@ -47,6 +49,8 @@ public class MainActivity extends AppCompatActivity {
         reminderList = findViewById(R.id.reminderList);
         addButton = findViewById(R.id.addButton);
         emptyView = findViewById(R.id.emptyView);
+        navHome = findViewById(R.id.navHome);
+        navCalendar = findViewById(R.id.navCalendar);
 
         requestNotificationPermission();
 
@@ -55,6 +59,15 @@ public class MainActivity extends AppCompatActivity {
         addButton.setOnClickListener(v -> {
             Intent intent = new Intent(MainActivity.this, AddReminderActivity.class);
             startActivityForResult(intent, 1);
+        });
+
+        navHome.setOnClickListener(v -> {
+            // Already on home; no-op
+        });
+
+        navCalendar.setOnClickListener(v -> {
+            Intent intent = new Intent(MainActivity.this, CalendarActivity.class);
+            startActivity(intent);
         });
     }
 
@@ -73,7 +86,10 @@ public class MainActivity extends AppCompatActivity {
         if (reminderData == null) {
             reminderData = new ArrayList<>();
         }
-        adapter = new ReminderAdapter(reminderData);
+        adapter = new ReminderAdapter(reminderData, reminder -> {
+            db.reminderDao().deleteById(reminder.getId());
+            loadData();
+        });
         reminderList.setLayoutManager(new LinearLayoutManager(this));
         reminderList.setAdapter(adapter);
         updateEmptyView();
@@ -89,12 +105,21 @@ public class MainActivity extends AppCompatActivity {
             String time = data.getStringExtra("time");
 
             Reminder reminder = new Reminder(title, date, time, 10);
-            db.reminderDao().insert(reminder);
+            long id = db.reminderDao().insert(reminder);
+            reminder.setId((int) id);
 
             loadData();
-            setReminder(time, title);
+            setReminder(time, title, (int) id);
             Toast.makeText(this, "Reminder Saved", Toast.LENGTH_SHORT).show();
         }
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        // Refresh list so completions and deletions triggered while the app was in background
+        // are reflected when the user returns.
+        loadData();
     }
 
     private void updateEmptyView() {
@@ -105,7 +130,7 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
-    private void setReminder(String time, String title) {
+    private void setReminder(String time, String title, int id) {
         try {
             String[] parts = time.split(":");
             int hour = Integer.parseInt(parts[0]);
@@ -137,6 +162,7 @@ public class MainActivity extends AppCompatActivity {
 
             Intent intent = new Intent(this, ReminderReceiver.class);
             intent.putExtra("title", title);
+            intent.putExtra("id", id);
 
             PendingIntent pendingIntent = PendingIntent.getBroadcast(
                     this,

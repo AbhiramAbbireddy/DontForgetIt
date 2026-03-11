@@ -12,12 +12,14 @@ public class Reminder {
     private String date;
     private String time;
     private int remindBefore;
+    private boolean completed;
 
     public Reminder(String title, String date, String time, int remindBefore) {
         this.title = title;
         this.date = date;
         this.time = time;
         this.remindBefore = remindBefore;
+        this.completed = false;
     }
 
     public int getId() {
@@ -42,5 +44,13 @@ public class Reminder {
 
     public int getRemindBefore() {
         return remindBefore;
+    }
+
+    public boolean isCompleted() {
+        return completed;
+    }
+
+    public void setCompleted(boolean completed) {
+        this.completed = completed;
     }
 }
