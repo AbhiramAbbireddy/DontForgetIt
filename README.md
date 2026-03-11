@@ -19,12 +19,18 @@ This app gives you a lightweight place to quickly add a reminder, see what is co
 - **Beautiful home screen**
   - Today section with date and a quick summary of how many reminders you have
   - List of reminders shown as rounded cards, inspired by a modern Figma design
+  - Bottom navigation with Home and Calendar entries
 
 - **Add reminder flow**
   - Enter reminder title
   - Pick date with a date picker
   - Pick time with a time picker
   - Automatically sets a notification before the scheduled time
+
+- **Calendar view**
+  - Dedicated calendar screen to browse reminders by date
+  - Selecting a day filters the list to only show reminders for that day
+  - Same card design as the home screen for a consistent look
 
 - **Persistent storage**
   - All reminders are saved in a local Room database
@@ -34,6 +40,11 @@ This app gives you a lightweight place to quickly add a reminder, see what is co
   - Android `AlarmManager` schedules a notification
   - Notification appears with the reminder title
   - Logic ensures the notification fires even if the exact "10 minutes before" time has already passed
+  - When a notification is delivered, the corresponding reminder is marked as completed in the database
+
+- **Task completion and deletion**
+  - Completed reminders are visually dimmed and have a strike-through title
+  - Each reminder card includes a delete button to remove a single reminder
 
 - **Empty state**
   - When there are no reminders, the home screen shows a friendly message instead of a blank list
@@ -61,6 +72,7 @@ High level Java package structure:
 - `com.example.dontforget.activities`
   - `MainActivity` – home screen with list of reminders and add button
   - `AddReminderActivity` – screen to input title, date and time
+  - `CalendarActivity` – calendar-based view for browsing reminders by date
   - `ReminderReceiver` – receives alarm events and shows notifications
 
 - `com.example.dontforget.model`
@@ -76,7 +88,8 @@ High level Java package structure:
 Key layout and drawable resources:
 
 - `activity_main.xml` – home screen UI (date header, today label, list, bottom navigation, floating add button)
-- `activity_add_reminder.xml` – add reminder form
+- `activity_add_reminder.xml` – add reminder form styled as a modern card
+- `activity_calendar.xml` – calendar screen for selecting a date and viewing reminders
 - `item_reminder.xml` – card layout for a single reminder
 - `bg_reminder_card.xml` – rounded card background
 - `bg_icon_circle.xml` – circular background for the small icon on each card
@@ -105,12 +118,12 @@ Key layout and drawable resources:
 
 3. **Save and Display**
    - `MainActivity.onActivityResult` receives the title, date and time.
-   - A `Reminder` object is created and inserted into Room using `ReminderDao`.
+   - A `Reminder` object is created and inserted into Room using `ReminderDao`, which returns its generated id.
    - The list is reloaded from the database.
    - The new reminder immediately appears in the list as a card.
 
 4. **Scheduling Notifications**
-   - After inserting a new reminder, `MainActivity` calls `setReminder(time, title)`.
+   - After inserting a new reminder, `MainActivity` calls `setReminder(time, title, id)`.
    - `setReminder`:
      - Parses the selected time into hour and minute.
      - Builds a `Calendar` instance for the main time.
@@ -118,7 +131,7 @@ Key layout and drawable resources:
      - If the 10-minutes-before time has already passed:
        - If the main time is still in the future, the alarm is moved to the main time.
        - If even the main time is in the past, the reminder is scheduled for the same time on the next day.
-     - Uses `AlarmManager` with a `PendingIntent` targeting `ReminderReceiver` to schedule the alarm.
+     - Uses `AlarmManager` with a `PendingIntent` targeting `ReminderReceiver` to schedule the alarm and passes the reminder id along with the title.
 
 5. **Notification**
    - When the alarm fires, Android calls `ReminderReceiver.onReceive`.
@@ -129,6 +142,16 @@ Key layout and drawable resources:
        - Text set to the reminder title
        - High priority so it is visible to the user
      - Shows the notification using `NotificationManager`.
+     - Marks the corresponding reminder as completed in Room using the id that was passed in the intent extras.
+
+6. **Calendar browsing**
+   - From the home screen, tapping the Calendar item in the bottom navigation opens `CalendarActivity`.
+   - `CalendarActivity` shows a month view and a list of reminders for the selected date.
+   - Selecting a different day in the calendar reloads the list using a date key that matches how reminders are stored.
+   - Deleting reminders from the calendar view uses the same adapter and DAO logic as the home screen.
+
+7. **Automatic UI refresh**
+   - Both `MainActivity` and `CalendarActivity` refresh their data in `onResume`, so any completions or deletions that happen while the app is in the background (for example, when a notification fires) are reflected when the user returns.
 
 ### Handling Android 13+ Notifications
 
@@ -184,7 +207,6 @@ The UI is inspired by a modern Figma design:
 
 This project is intentionally kept focused and simple, but there are several natural extensions:
 
-- Calendar screen that lets you browse reminders by date.
 - Natural language quick add (for example, "Call mom tomorrow 7pm").
 - Recurring reminders (daily, weekly, custom).
 - Categories or tags for reminders (work, personal, health, etc.).
