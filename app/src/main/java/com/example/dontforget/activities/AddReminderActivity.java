@@ -4,8 +4,10 @@ import android.app.DatePickerDialog;
 import android.app.TimePickerDialog;
 import android.content.Intent;
 import android.os.Bundle;
+import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.Spinner;
 import android.widget.Toast;
 
 import androidx.appcompat.app.AppCompatActivity;
@@ -18,9 +20,11 @@ public class AddReminderActivity extends AppCompatActivity {
 
     EditText titleInput;
     Button dateButton,timeButton,saveReminder;
+    Spinner recurrenceSpinner;
 
     String selectedDate="";
     String selectedTime="";
+    String selectedRecurrence="NONE";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -31,6 +35,16 @@ public class AddReminderActivity extends AppCompatActivity {
         dateButton = findViewById(R.id.dateButton);
         timeButton = findViewById(R.id.timeButton);
         saveReminder = findViewById(R.id.saveReminder);
+        recurrenceSpinner = findViewById(R.id.recurrenceSpinner);
+
+        String[] options = new String[]{"None","Daily","Weekly","Monthly"};
+        ArrayAdapter<String> adapter = new ArrayAdapter<>(
+                this,
+                R.layout.item_spinner_recurrence,
+                options
+        );
+        adapter.setDropDownViewResource(R.layout.item_spinner_recurrence_dropdown);
+        recurrenceSpinner.setAdapter(adapter);
 
         dateButton.setOnClickListener(v -> {
 
@@ -84,11 +98,26 @@ public class AddReminderActivity extends AppCompatActivity {
                 return;
             }
 
+            switch (recurrenceSpinner.getSelectedItemPosition()) {
+                case 1:
+                    selectedRecurrence = "DAILY";
+                    break;
+                case 2:
+                    selectedRecurrence = "WEEKLY";
+                    break;
+                case 3:
+                    selectedRecurrence = "MONTHLY";
+                    break;
+                default:
+                    selectedRecurrence = "NONE";
+            }
+
             Intent resultIntent = new Intent();
 
             resultIntent.putExtra("title",title);
             resultIntent.putExtra("date",selectedDate);
             resultIntent.putExtra("time",selectedTime);
+            resultIntent.putExtra("recurrence",selectedRecurrence);
 
             setResult(RESULT_OK,resultIntent);
 

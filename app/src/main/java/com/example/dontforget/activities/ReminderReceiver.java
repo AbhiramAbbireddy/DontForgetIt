@@ -10,6 +10,8 @@ import androidx.core.app.NotificationCompat;
 
 import com.example.dontforget.R;
 import com.example.dontforget.database.ReminderDatabase;
+import com.example.dontforget.model.Reminder;
+import com.example.dontforget.util.ReminderScheduler;
 
 public class ReminderReceiver extends BroadcastReceiver {
 
@@ -46,10 +48,18 @@ public class ReminderReceiver extends BroadcastReceiver {
 
         manager.notify(id > 0 ? id : 1, builder.build());
 
-        // Mark reminder as completed in the database
         if (id > 0) {
             ReminderDatabase db = ReminderDatabase.getInstance(context);
-            db.reminderDao().markCompleted(id);
+            Reminder reminder = db.reminderDao().getById(id);
+            if (reminder != null) {
+                String recurrence = reminder.getRecurrenceType();
+                if (recurrence == null || "NONE".equals(recurrence)) {
+                    db.reminderDao().markCompleted(id);
+                } else {
+                    // For recurring reminders, schedule the next occurrence
+                    ReminderScheduler.scheduleNextRecurring(context, reminder);
+                }
+            }
         }
     }
 }

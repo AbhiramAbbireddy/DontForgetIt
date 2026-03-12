@@ -12,6 +12,7 @@ import com.example.dontforget.R;
 import com.example.dontforget.adapter.ReminderAdapter;
 import com.example.dontforget.database.ReminderDatabase;
 import com.example.dontforget.model.Reminder;
+import com.example.dontforget.util.ReminderDateUtils;
 
 import java.util.ArrayList;
 import java.util.Calendar;
@@ -56,6 +57,9 @@ public class CalendarActivity extends AppCompatActivity {
 
         navCalendar.setTextColor(0xFF5B5FC7);
 
+        updateMonthTitle(calendarView.getDate());
+        loadForDate(calendarView.getDate());
+
         calendarView.setOnDateChangeListener((view, year, month, dayOfMonth) -> {
             Calendar c = Calendar.getInstance();
             c.set(year, month, dayOfMonth);
@@ -81,15 +85,15 @@ public class CalendarActivity extends AppCompatActivity {
     private void loadForDate(long millis) {
         Calendar c = Calendar.getInstance();
         c.setTimeInMillis(millis);
-        int day = c.get(Calendar.DAY_OF_MONTH);
-        int month = c.get(Calendar.MONTH) + 1;
-        int year = c.get(Calendar.YEAR);
-        String dateKey = day + "/" + month + "/" + year;
 
         reminderData.clear();
-        reminderData.addAll(db.reminderDao().getRemindersForDate(dateKey));
+        List<Reminder> allReminders = db.reminderDao().getAllReminders();
+        for (Reminder reminder : allReminders) {
+            if (ReminderDateUtils.occursOn(reminder, c)) {
+                reminderData.add(reminder);
+            }
+        }
         adapter.notifyDataSetChanged();
         updateMonthTitle(millis);
     }
 }
-

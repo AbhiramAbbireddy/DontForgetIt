@@ -25,4 +25,7 @@ public interface ReminderDao {
 
     @Query("DELETE FROM reminders WHERE id = :id")
     void deleteById(int id);
+
+    @Query("SELECT * FROM reminders WHERE id = :id LIMIT 1")
+    Reminder getById(int id);
 }

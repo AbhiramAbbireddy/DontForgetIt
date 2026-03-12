@@ -78,7 +78,26 @@
                 android:textAllCaps="false"
                 android:textColor="#5B5FC7"
                 android:textSize="14sp" />
+
         </LinearLayout>
+
+        <TextView
+            android:id="@+id/repeatLabel"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="16dp"
+            android:text="Repeat"
+            android:textColor="#777A8C"
+            android:textSize="14sp" />
+
+        <Spinner
+            android:id="@+id/recurrenceSpinner"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:background="@drawable/bg_badge"
+            android:paddingLeft="8dp"
+            android:paddingRight="8dp" />
 
     </LinearLayout>
 

@@ -13,6 +13,7 @@ public class Reminder {
     private String time;
     private int remindBefore;
     private boolean completed;
+    private String recurrenceType; // NONE, DAILY, WEEKLY, MONTHLY
 
     public Reminder(String title, String date, String time, int remindBefore) {
         this.title = title;
@@ -20,6 +21,7 @@ public class Reminder {
         this.time = time;
         this.remindBefore = remindBefore;
         this.completed = false;
+        this.recurrenceType = "NONE";
     }
 
     public int getId() {
@@ -52,5 +54,13 @@ public class Reminder {
 
     public void setCompleted(boolean completed) {
         this.completed = completed;
+    }
+
+    public String getRecurrenceType() {
+        return recurrenceType;
+    }
+
+    public void setRecurrenceType(String recurrenceType) {
+        this.recurrenceType = recurrenceType;
     }
 }

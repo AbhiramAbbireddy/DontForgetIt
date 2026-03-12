@@ -1,8 +1,6 @@
 package com.example.dontforget.activities;
 
 import android.Manifest;
-import android.app.AlarmManager;
-import android.app.PendingIntent;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.os.Build;
@@ -22,11 +20,14 @@ import com.example.dontforget.R;
 import com.example.dontforget.adapter.ReminderAdapter;
 import com.example.dontforget.database.ReminderDatabase;
 import com.example.dontforget.model.Reminder;
+import com.example.dontforget.util.ReminderDateUtils;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.List;
+
+import com.example.dontforget.util.ReminderScheduler;
 
 public class MainActivity extends AppCompatActivity {
 
@@ -35,6 +36,9 @@ public class MainActivity extends AppCompatActivity {
     TextView emptyView;
     TextView navHome;
     TextView navCalendar;
+    TextView titleView;
+    TextView subTitleView;
+    TextView todaySummaryView;
 
     List<Reminder> reminderData;
     ReminderAdapter adapter;
@@ -51,6 +55,9 @@ public class MainActivity extends AppCompatActivity {
         emptyView = findViewById(R.id.emptyView);
         navHome = findViewById(R.id.navHome);
         navCalendar = findViewById(R.id.navCalendar);
+        titleView = findViewById(R.id.title);
+        subTitleView = findViewById(R.id.subTitle);
+        todaySummaryView = findViewById(R.id.todaySummary);
 
         requestNotificationPermission();
 
@@ -93,6 +100,7 @@ public class MainActivity extends AppCompatActivity {
         reminderList.setLayoutManager(new LinearLayoutManager(this));
         reminderList.setAdapter(adapter);
         updateEmptyView();
+        updateHeader();
     }
 
     @Override
@@ -103,13 +111,17 @@ public class MainActivity extends AppCompatActivity {
             String title = data.getStringExtra("title");
             String date = data.getStringExtra("date");
             String time = data.getStringExtra("time");
+            String recurrence = data.getStringExtra("recurrence");
 
             Reminder reminder = new Reminder(title, date, time, 10);
+            if (recurrence != null) {
+                reminder.setRecurrenceType(recurrence);
+            }
             long id = db.reminderDao().insert(reminder);
             reminder.setId((int) id);
 
             loadData();
-            setReminder(time, title, (int) id);
+            ReminderScheduler.scheduleInitial(this, reminder);
             Toast.makeText(this, "Reminder Saved", Toast.LENGTH_SHORT).show();
         }
     }
@@ -122,6 +134,16 @@ public class MainActivity extends AppCompatActivity {
         loadData();
     }
 
+    private void updateHeader() {
+        Calendar today = Calendar.getInstance();
+        titleView.setText(ReminderDateUtils.formatHeaderDay(today));
+        subTitleView.setText(ReminderDateUtils.formatHeaderDate(today));
+
+        int todayCount = ReminderDateUtils.countRemindersForDate(reminderData, today);
+        String suffix = todayCount == 1 ? " reminder today" : " reminders today";
+        todaySummaryView.setText(todayCount + suffix);
+    }
+
     private void updateEmptyView() {
         if (reminderData == null || reminderData.isEmpty()) {
             emptyView.setVisibility(View.VISIBLE);
@@ -130,75 +152,5 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
-    private void setReminder(String time, String title, int id) {
-        try {
-            String[] parts = time.split(":");
-            int hour = Integer.parseInt(parts[0]);
-            int minute = Integer.parseInt(parts[1]);
-
-            Calendar baseTime = Calendar.getInstance();
-            baseTime.set(Calendar.HOUR_OF_DAY, hour);
-            baseTime.set(Calendar.MINUTE, minute);
-            baseTime.set(Calendar.SECOND, 0);
-
-            // Target trigger = 10 minutes before the chosen time
-            Calendar triggerTime = (Calendar) baseTime.clone();
-            triggerTime.add(Calendar.MINUTE, -10);
-
-            Calendar now = Calendar.getInstance();
-
-            // If "10 minutes before" is already in the past, but the main time is still in future,
-            // fallback to triggering at the main time instead of silently doing nothing.
-            if (triggerTime.before(now)) {
-                if (baseTime.after(now)) {
-                    triggerTime = (Calendar) baseTime.clone();
-                } else {
-                    // If even the main time is in the past, schedule for tomorrow at same time - 10
-                    baseTime.add(Calendar.DATE, 1);
-                    triggerTime = (Calendar) baseTime.clone();
-                    triggerTime.add(Calendar.MINUTE, -10);
-                }
-            }
-
-            Intent intent = new Intent(this, ReminderReceiver.class);
-            intent.putExtra("title", title);
-            intent.putExtra("id", id);
-
-            PendingIntent pendingIntent = PendingIntent.getBroadcast(
-                    this,
-                    (int) System.currentTimeMillis(), // Unique ID for each alarm
-                    intent,
-                    PendingIntent.FLAG_IMMUTABLE
-            );
-
-            AlarmManager alarmManager = (AlarmManager) getSystemService(ALARM_SERVICE);
-            if (alarmManager != null) {
-                long triggerAt = triggerTime.getTimeInMillis();
-
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-                    if (alarmManager.canScheduleExactAlarms()) {
-                        alarmManager.setExact(
-                                AlarmManager.RTC_WAKEUP,
-                                triggerAt,
-                                pendingIntent
-                        );
-                    } else {
-                        alarmManager.set(
-                                AlarmManager.RTC_WAKEUP,
-                                triggerAt,
-                                pendingIntent
-                        );
-                    }
-                } else {
-                    alarmManager.setExact(
-                            AlarmManager.RTC_WAKEUP,
-                            triggerAt,
-                            pendingIntent
-                    );
-                }
-            }
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-    }
+    // scheduling is handled by ReminderScheduler
 }
